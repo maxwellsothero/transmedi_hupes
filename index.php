@@ -3,7 +3,6 @@ session_start();
 include 'db.php';
 require_once 'config.php';
 
-
 if (!isset($_SESSION['usuario_id'])) {
     header('Location: login.php');
     exit;
@@ -25,18 +24,73 @@ function gerar_select($tabela, $coluna, $name, $selected = '') {
 }
 ?>
 
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css">
 
+<style>
+  nav.navbar {
+    position: sticky;
+    top: 0;
+    z-index: 1030;
+  }
+</style>
 
-<!-- jQuery -->
+<body>
+<?php include 'header.php'; ?>
+
+<div class="d-flex justify-content-center align-items-center">
+  <h2>Controle de Remoções - HUPES</h2>
+</div>
+<div class="d-flex justify-content-end align-items-center">
+  <a href="logout.php" class="btn btn-outline-danger">Sair</a>
+</div>
+<button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#modalCadastro">Cadastrar Remoção</button>
+
+<div class="table-responsive">
+  <table id="tabela" class="table table-bordered table-striped">
+    <thead>
+      <tr>
+        <?php foreach ($campos as $col) echo "<th>$col</th>"; ?>
+        <th>AÇÕES</th>
+      </tr>
+    </thead>
+    <tbody>
+      <?php
+      $query = "SELECT * FROM planilha_hupes";
+      $result = mysqli_query($conn, $query);
+      if (!$result) {
+        echo "<tr><td colspan='" . (count($campos)+1) . "' class='text-danger text-center'>Erro ao carregar dados da tabela.</td></tr>";
+      } else {
+        while ($row = mysqli_fetch_assoc($result)) {
+          echo "<tr>";
+          foreach ($campos as $col) {
+            if ($col === 'data_remocao' && !empty($row[$col])) {
+              echo "<td>" . date('d/m/Y', strtotime($row[$col])) . "</td>";
+            } else {
+              echo "<td>" . htmlspecialchars($row[$col]) . "</td>";
+            }
+          }
+          echo "<td>
+                  <div class='d-flex gap-1'>
+                    <button class='btn btn-sm btn-warning' onclick='editar(" . json_encode($row) . ")'>Editar</button>
+                    <button class='btn btn-sm btn-danger' onclick=\"confirmarExclusao('{$row['id']}')\">Excluir</button>
+                    <button class='btn btn-sm btn-secondary' onclick='baixarPDF(" . json_encode($row) . ")'>PDF</button>
+                  </div>
+                </td></tr>";
+        }
+      }
+      ?>
+    </tbody>
+  </table>
+</div>
+
+<?php include 'modais.php'; ?>
+
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-
-
-
-<!-- DataTables + Bootstrap 5 -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
-
-<!-- Botões de exportação DataTables -->
 <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.bootstrap5.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
@@ -45,85 +99,16 @@ function gerar_select($tabela, $coluna, $name, $selected = '') {
 <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
-
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
-  <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css">
-
-<!-- CSS dos botões -->
-<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css">
-
-<body>
-<?php include 'header.php';?>
-
-<div class="d-flex justify-content-center align-items-center">
-  <h2>Controle de Remoções - HUPES</h2>    
-</div>
-<div class="d-flex justify-content-end align-items-center">
-  <a href="logout.php" class="btn btn-outline-danger">Sair</a>
-</div>
-<button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#modalCadastro">Cadastrar Remoção</button>
-
-<table id="tabela" class="table table-bordered table-striped">
-  <thead>
-    <tr>
-      <?php foreach ($campos as $col) echo "<th>$col</th>"; ?>
-      <th>AÇÕES</th>
-    </tr>
-  </thead>
-  <tbody>
-    <?php
-    $query = "SELECT * FROM planilha_hupes";
-    $result = mysqli_query($conn, $query);
-    if (!$result) {
-      echo "<tr><td colspan='" . (count($campos)+1) . "' class='text-danger text-center'>Erro ao carregar dados da tabela.</td></tr>";
-    } else {
-      while ($row = mysqli_fetch_assoc($result)) {
-        echo "<tr>";
-        foreach ($campos as $col) {
-          if ($col === 'data_remocao' && !empty($row[$col])) {
-            echo "<td>" . date('d/m/Y', strtotime($row[$col])) . "</td>";
-          } else {
-            echo "<td>" . htmlspecialchars($row[$col]) . "</td>";
-          }
-        }
-        echo "<td>
-                <div class='d-flex gap-1'>
-                  <button class='btn btn-sm btn-warning' onclick='editar(" . json_encode($row) . ")'>Editar</button>
-                  <button class='btn btn-sm btn-danger' onclick=\"confirmarExclusao('{$row['id']}')\">Excluir</button>
-                  <button class='btn btn-sm btn-secondary' onclick='baixarPDF(" . json_encode($row) . ")'>PDF</button>
-                </div>
-              </td></tr>";
-      }
-    }
-    ?>
-  </tbody>
-</table>
 <script>
 $(document).ready(function() {
   $('#tabela').DataTable({
+    scrollX: true,
     dom: 'Bfrtip',
     buttons: [
-      {
-        extend: 'csvHtml5',
-        text: 'CSV'
-      },
-      {
-        extend: 'excelHtml5',
-        text: 'Excel'
-      },
-      {
-        extend: 'pdfHtml5',
-        text: 'PDF',
-        orientation: 'landscape',
-        pageSize: 'A4'
-      },
-      {
-        extend: 'print',
-        text: 'Imprimir'
-      }
+      { extend: 'csvHtml5', text: 'CSV' },
+      { extend: 'excelHtml5', text: 'Excel' },
+      { extend: 'pdfHtml5', text: 'PDF', orientation: 'landscape', pageSize: 'A4' },
+      { extend: 'print', text: 'Imprimir' }
     ],
     language: {
       url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json'
@@ -131,9 +116,6 @@ $(document).ready(function() {
   });
 });
 </script>
-
-
-</div>
 
 <!-- Modal Cadastro -->
 <div class="modal fade" id="modalCadastro" tabindex="-1" aria-hidden="true">
@@ -253,30 +235,22 @@ $(document).ready(function() {
   </div>
 </div>
 
-
-</body>
-
-
 <script>
 function editar(dados) {
   const campos = <?= json_encode($campos) ?>;
-
   campos.forEach(campo => {
     const input = document.getElementById('edit_' + campo);
     if (input) {
       if (input.tagName === 'SELECT') {
         input.value = dados[campo] || '';
       } else if (input.type === 'date') {
-        // Corrige formato para date input
         input.value = dados[campo] ? new Date(dados[campo]).toISOString().split('T')[0] : '';
       } else {
         input.value = dados[campo] || '';
       }
     }
   });
-
   document.getElementById('edit_id').value = dados['id'];
-
   const modal = new bootstrap.Modal(document.getElementById('modalEditar'));
   modal.show();
 }
@@ -289,32 +263,22 @@ function confirmarExclusao(id) {
 
 function baixarPDF(dados) {
   const campos = <?= json_encode($campos) ?>;
-
   const conteudo = campos.map(campo => {
     const valor = dados[campo] || '';
     return { text: `${campo}: ${valor}`, margin: [0, 2] };
   });
-
   const docDefinition = {
     content: [
       { text: 'Relatório de Remoção - HUPES', style: 'header', alignment: 'center', margin: [0, 0, 0, 10] },
       ...conteudo
     ],
     styles: {
-      header: {
-        fontSize: 18,
-        bold: true
-      }
+      header: { fontSize: 18, bold: true }
     }
   };
-
   pdfMake.createPdf(docDefinition).download(`remocao_${dados.id || 'sem_id'}.pdf`);
 }
 
-</script>
-
-
-<script>
 function preencherHoraAtual(id) {
   const agora = new Date();
   const hora = agora.getHours().toString().padStart(2, '0');
@@ -323,17 +287,5 @@ function preencherHoraAtual(id) {
 }
 </script>
 
-<!-- Scripts necessários -->
-<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.bootstrap5.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
-
 <?php include 'footer.php'; ?>
+</body>
