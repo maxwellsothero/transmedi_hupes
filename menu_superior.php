@@ -1,19 +1,19 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
   <div class="container-fluid">
-  <a class="navbar-brand d-flex align-items-center gap-2" href="<?= BASE_URL ?>index.php">
-  <img src="<?= BASE_URL ?>transmedi.png" alt="Logo" width="100" height="100">
-  <span>Transmedi - HUPES</span>
-</a>
+    <a class="navbar-brand d-flex align-items-center gap-2" href="<?= BASE_URL ?>index.php">
+      <img src="<?= BASE_URL ?>transmedi.png" alt="Logo" class="img-fluid d-inline-block align-text-top" style="max-height: 50px;">
+      <span class="d-none d-sm-inline">Transmedi - HUPES</span>
+    </a>
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
+
     <div class="collapse navbar-collapse" id="navbarNavDropdown">
-      <ul class="navbar-nav me-auto ">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
         <li class="nav-item">
           <a class="nav-link" href="<?= BASE_URL ?>dashboard.php">DASHBOARD</a>
         </li>
-
         <li class="nav-item">
           <a class="nav-link" href="<?= BASE_URL ?>index.php">Remoções</a>
         </li>
@@ -32,11 +32,8 @@
           </ul>
         </li>
         <li class="nav-item">
-      
           <a class="nav-link" href="<?= BASE_URL ?>relatorio.php">Relatórios</a>
-
         </li>
-      
       </ul>
       <ul class="navbar-nav">
         <li class="nav-item">
