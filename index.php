@@ -57,8 +57,17 @@ function gerar_select($tabela, $coluna, $name, $selected = '') {
     </thead>
     <tbody>
       <?php
+      // Carrega cores da tabela 'fase'
+      $fasesCores = [];
+      $resFases = mysqli_query($conn, "SELECT nome, cor FROM fase");
+      while ($f = mysqli_fetch_assoc($resFases)) {
+        $fasesCores[$f['nome']] = $f['cor'];
+      }
+
+      // Consulta as remoções
       $query = "SELECT * FROM planilha_hupes";
       $result = mysqli_query($conn, $query);
+
       if (!$result) {
         echo "<tr><td colspan='" . (count($campos)+1) . "' class='text-danger text-center'>Erro ao carregar dados da tabela.</td></tr>";
       } else {
@@ -67,15 +76,22 @@ function gerar_select($tabela, $coluna, $name, $selected = '') {
           foreach ($campos as $col) {
             if ($col === 'data_remocao' && !empty($row[$col])) {
               echo "<td>" . date('d/m/Y', strtotime($row[$col])) . "</td>";
+            } elseif ($col === 'FASE') {
+              $fase = htmlspecialchars($row[$col]);
+              $corFundo = $fasesCores[$fase] ?? '#cccccc';
+              echo "<td><span class='badge text-light' style='background-color: $corFundo;'>$fase</span></td>";
             } else {
               echo "<td>" . htmlspecialchars($row[$col]) . "</td>";
             }
           }
+
+          $jsonRow = htmlspecialchars(json_encode($row), ENT_QUOTES, 'UTF-8');
+
           echo "<td>
                   <div class='d-flex gap-1'>
-                    <button class='btn btn-sm btn-warning' onclick='editar(" . json_encode($row) . ")'>Editar</button>
+                    <button class='btn btn-sm btn-warning' onclick='editar($jsonRow)'>Editar</button>
                     <button class='btn btn-sm btn-danger' onclick=\"confirmarExclusao('{$row['id']}')\">Excluir</button>
-                    <button class='btn btn-sm btn-secondary' onclick='baixarPDF(" . json_encode($row) . ")'>PDF</button>
+                    <button class='btn btn-sm btn-secondary' onclick='baixarPDF($jsonRow)'>PDF</button>
                   </div>
                 </td></tr>";
         }
@@ -84,6 +100,7 @@ function gerar_select($tabela, $coluna, $name, $selected = '') {
     </tbody>
   </table>
 </div>
+
 
 <?php include 'modais.php'; ?>
 
